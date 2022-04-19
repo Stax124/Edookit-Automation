@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
 import { Logger } from "tslog";
-import { Scraper } from "./scraper";
+import { AbsenceScraper } from "./absenceScraper";
 
 const log = new Logger();
 
@@ -23,7 +23,7 @@ async function main() {
 	});
 
 	const page = await browser.newPage();
-	const scraper = new Scraper(log, page);
+	const scraper = new AbsenceScraper(log, page);
 	scraper.initPage();
 
 	await page.goto("https://spseol-login.edookit.net/", {
@@ -39,23 +39,28 @@ async function main() {
 	await page.waitForSelector(".menu_box_in", { timeout: 0 });
 	log.info("Main page loaded");
 
+	log.info("Getting absence page...");
 	await scraper.getAbsencePage();
+	log.info("Getting cookies...");
 	await scraper.getCookies();
+	log.info("Setting class name...");
 	await scraper.setClassName();
 
-	// // !!! If name is data instead, everything works fine
-	// // Filter all entries that have excuse or absence empty
+	log.info("Getting absence data and filtering...");
 	const tableData = await scraper.getAbsenceData();
 	const absenceData = tableData.filter((data) => data.absence || data.excuse);
-	log.info(absenceData);
 
 	log.info(scraper.requestData);
+	log.info(scraper.cookies);
 
+	log.info("Appending excuses...");
 	if (absenceData.length > 0) {
 		await scraper.excuseStudents(absenceData);
 	}
 
-	// await excuseStudents(page, absenceData);
+	log.info("Syncing absence...");
+	scraper.syncAbsence();
+	log.info("Absence synced!");
 }
 
 main();

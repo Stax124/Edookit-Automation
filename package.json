@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "test": "ts-node index.bak.ts"
+    "test": "ts-node index.bak.ts",
+    "build": "tsc && pkg --out-path build .\\out\\index.js --public && cp -R ./node_modules/puppeteer/.local-chromium ./build/puppeteer"
   },
   "author": "",
   "license": "ISC",

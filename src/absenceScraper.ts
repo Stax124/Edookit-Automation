@@ -9,7 +9,7 @@ import {
 } from "./interfaces";
 import { sleep } from "./utils";
 
-export class Scraper {
+export class AbsenceScraper {
 	log: Logger;
 	page: puppeteer.Page;
 	cookies: CookieInterface = {
@@ -27,11 +27,13 @@ export class Scraper {
 		__componentId: "",
 	};
 	absenceData = new Array<AbsenceData>();
+	poshSync: PoshSync;
 
 	constructor(logger: Logger, page: puppeteer.Page) {
 		this.log = logger;
 		this.page = page;
 		this.log.info("Scraper initialized");
+		this.poshSync = new PoshSync(this.cookies, this.requestData);
 	}
 
 	async waitForLoading(initialDelay: number = 500) {
@@ -62,8 +64,6 @@ export class Scraper {
 			returnedCookies.find((c) => c.name === "__rst")?.value ?? "";
 		this.cookies.lastReqTime =
 			returnedCookies.find((c) => c.name === "lastReqTime")?.value ?? "";
-
-		this.log.warn("Cookies:", this.cookies);
 	}
 
 	async initPage() {
@@ -84,7 +84,6 @@ export class Scraper {
 						return;
 					}
 
-					const request_headers = request.headers();
 					const request_post_data = request.postData();
 
 					const tidPattern = /__tid=([\d]+)/;
@@ -129,22 +128,9 @@ export class Scraper {
 							componentIdPattern.exec(request_post_data)![1];
 					}
 
-					// const response_headers = response.headers;
-					// const response_size = response_headers["content-length"];
-					// const response_body = response.body;
-
-					this.log.info({
-						request_url,
-						request_headers,
-						request_post_data,
-						// response_headers,
-						// response_size,
-						// response_body,
-					});
 					request.continue();
 				})
 				.catch((error) => {
-					this.log.error(error);
 					request.continue();
 				});
 		});
@@ -156,7 +142,7 @@ export class Scraper {
 			{ waitUntil: "networkidle2" }
 		);
 		await this.page.waitForSelector(".eg_top_panel", { timeout: 0 });
-		this.log.info("Absence this.page loaded");
+		this.log.info("Absence page loaded");
 	}
 
 	async setClassName() {
@@ -226,13 +212,16 @@ export class Scraper {
 			this.requestData.__tid !== "" &&
 			this.requestData.__vmid !== ""
 		) {
-			const poshSync = new PoshSync(this.cookies, this.requestData);
-
 			for (const absenceData of absenceDataArray) {
-				poshSync.appendExcuse(absenceData);
+				this.poshSync.appendAbsenceExcuse(absenceData);
 			}
 		} else {
 			this.log.error("Data is not ready");
 		}
+	}
+
+	syncAbsence() {
+		this.poshSync.initialize();
+		this.poshSync.syncAbsence();
 	}
 }

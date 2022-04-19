@@ -1,3 +1,4 @@
+import { exec } from "child_process";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import {
 	AbsenceData,
@@ -8,19 +9,21 @@ import {
 export class PoshSync {
 	cookies: CookieInterface;
 	requestData: RequestDataInterface;
+	excusePath: string;
+	cookiePath: string;
+	fullExcuseCall: string;
 
 	constructor(cookies: CookieInterface, requestData: RequestDataInterface) {
 		this.cookies = cookies;
 		this.requestData = requestData;
-
-		this.makeSyncDir();
-		this.saveCookies();
-		this.writeHeader();
+		this.fullExcuseCall = "";
+		this.excusePath = "./posh-sync/absence-sync.ps1";
+		this.cookiePath = "./posh-sync/cookies.json";
 	}
 
 	saveCookies() {
 		// Save cookies for debugging
-		writeFileSync("./posh-sync/cookies.json", JSON.stringify(this.cookies), {
+		writeFileSync(this.cookiePath, JSON.stringify(this.cookies), {
 			encoding: "utf8",
 			flag: "w",
 		});
@@ -32,7 +35,7 @@ export class PoshSync {
 		}
 	}
 
-	writeHeader() {
+	writeAbsenceHeader() {
 		const header = `
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36"
@@ -45,13 +48,13 @@ $session.Cookies.Add((New-Object System.Net.Cookie("lastReqTime", "${this.cookie
 `;
 
 		// Write the necessary cookies in
-		writeFileSync("./posh-sync/execute.ps1", header, {
+		writeFileSync(this.excusePath, header, {
 			encoding: "utf8",
 			flag: "w",
 		});
 	}
 
-	appendExcuse(absenceData: AbsenceData) {
+	appendAbsenceExcuse(absenceData: AbsenceData) {
 		const excuseCall = `
 Invoke-WebRequest -UseBasicParsing -Uri "https://spseol-login.edookit.net/handler/grid/lesson_-absences-to-excuse-data" \`
 -Method "POST" \`
@@ -77,9 +80,33 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://spseol-login.edookit.net/handle
 -Body "__operation=save&__index=${absenceData.rid}&real_listattendancestatus_id=4&__vmid=${this.requestData.__vmid}&__oid=${this.requestData.__oid}&__tid=${this.requestData.__tid}&__componentId=${this.requestData.__componentId}&__sid=${this.requestData.__sid}&__compId=__lc_Grid_Lesson_AbsencesToExcuse"
 `;
 
-		writeFileSync("./posh-sync/execute.ps1", excuseCall, {
+		this.fullExcuseCall += excuseCall;
+	}
+
+	appendAbsenceToFile() {
+		writeFileSync(this.excusePath, this.fullExcuseCall, {
 			encoding: "utf8",
 			flag: "a",
 		});
+	}
+
+	syncAbsence() {
+		exec(
+			`powershell -executionpolicy bypass -File ${this.excusePath} -File ${this.excusePath}`,
+			(err, stdout, stderr) => {
+				if (err) {
+					console.error(err);
+				}
+				console.log(stdout);
+				console.log(stderr);
+			}
+		);
+	}
+
+	initialize() {
+		this.makeSyncDir();
+		this.saveCookies();
+		this.writeAbsenceHeader();
+		this.appendAbsenceToFile();
 	}
 }
