@@ -1,3 +1,4 @@
+import prompts from "prompts";
 import puppeteer from "puppeteer";
 import { Logger } from "tslog";
 import { AbsenceScraper } from "./absenceScraper";
@@ -59,8 +60,19 @@ async function main() {
 	}
 
 	log.info("Syncing absence...");
-	scraper.syncAbsence();
+
+	const confirm = await prompts({
+		type: "confirm",
+		name: "value",
+		message: "Are you sure you want to sync?",
+	});
+
+	if (confirm.value) {
+		scraper.syncAbsence();
+	}
 	log.info("Absence synced!");
+
+	await browser.close();
 }
 
 main();

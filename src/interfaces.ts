@@ -3,6 +3,8 @@ export interface AbsenceData {
 	absence: string;
 	excuse: string;
 	rid: number;
+	lesson: string;
+	date: string;
 }
 
 export interface CookieInterface {

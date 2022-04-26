@@ -13,6 +13,7 @@
   "dependencies": {
     "axios": "^0.26.1",
     "node-fetch": "^2.6.7",
+    "prompts": "^2.4.2",
     "puppeteer": "^13.3.1",
     "puppeteer-fetch": "^0.3.1",
     "request-promise-native": "^1.0.9",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.1",
+    "@types/prompts": "^2.0.14",
     "@types/request-promise-native": "^1.0.18"
   }
 }

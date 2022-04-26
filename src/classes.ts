@@ -78,6 +78,8 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://spseol-login.edookit.net/handle
 } \`
 -ContentType "application/x-www-form-urlencoded; charset=UTF-8" \`
 -Body "__operation=save&__index=${absenceData.rid}&real_listattendancestatus_id=4&__vmid=${this.requestData.__vmid}&__oid=${this.requestData.__oid}&__tid=${this.requestData.__tid}&__componentId=${this.requestData.__componentId}&__sid=${this.requestData.__sid}&__compId=__lc_Grid_Lesson_AbsencesToExcuse"
+
+Start-Sleep -Seconds 1
 `;
 
 		this.fullExcuseCall += excuseCall;

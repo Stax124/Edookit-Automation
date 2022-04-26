@@ -36,19 +36,6 @@ export class AbsenceScraper {
 		this.poshSync = new PoshSync(this.cookies, this.requestData);
 	}
 
-	async waitForLoading(initialDelay: number = 500) {
-		this.log.info("Waiting for loading...");
-		await sleep(initialDelay);
-		this.page.evaluate(() => {
-			return (
-				window.getComputedStyle(document.querySelector(".loading")!).display ===
-				"none"
-			);
-		});
-		await this.page.waitForSelector(".loading", { visible: false });
-		this.log.info("Loading is no longer visible");
-	}
-
 	async currentUrl() {
 		return this.page.url();
 	}
@@ -67,9 +54,6 @@ export class AbsenceScraper {
 	}
 
 	async initPage() {
-		this.page.on("console", (msg: any) =>
-			this.log.info("PAGE LOG:", msg.text())
-		);
 		this.page.setRequestInterception(true);
 		this.page.on("request", (request) => {
 			request_client({
@@ -152,7 +136,6 @@ export class AbsenceScraper {
 		await this.page.type("input[name=filter_pgroup_id]", "2L", { delay: 50 });
 		await this.page.keyboard.press("Enter");
 
-		await this.waitForLoading();
 		await sleep(700);
 	}
 
@@ -185,6 +168,12 @@ export class AbsenceScraper {
 								/([\d]{1,2}[.])+\s[\d]{1,2}[:][\d]{1,2}\s[\S]*\s[\S][.]/gi,
 								""
 							) ?? "",
+					lesson:
+						tr.querySelector(".c3")?.innerHTML.replace(/(<([^>]+)>)/gi, "") ??
+						"",
+					date:
+						tr.querySelector(".c4")?.innerHTML.replace(/(<([^>]+)>)/gi, "") ??
+						"",
 					rid: parseInt(tr.getAttribute("rid") ?? "0"),
 				};
 				tableData.push(data);
